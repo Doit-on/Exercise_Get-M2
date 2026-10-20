@@ -3105,7 +3105,7 @@
     };
     let userAnswers = {}; // { [questionId]: answerValue }
     let teacherPin = '1234';
-    const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbyma9twsGEiCaBO2AhwGQ8uGPpXNTxba4O3ivKhKRJ67GNJReZyW9VYKrWaVVKA7io8EQ/exec';
+    const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwgmT1Yt61LJTo48ocyY-F5pEBWxsysdEJufs-9Rb6Zety90jp8D9QRwfF0Es1PHYi7qA/exec';
     let googleAppsScriptUrl = DEFAULT_GAS_URL;
     let submissionsCache = [];
     let studentsDbCache = [];
@@ -3177,10 +3177,11 @@
         if (storedPin) teacherPin = storedPin;
 
         const storedUrl = localStorage.getItem(LS_GAS_URL);
-        if (storedUrl && storedUrl.trim()) {
+        if (storedUrl && storedUrl.trim() && !storedUrl.includes('AKfycbyma9twsGEiCaBO2AhwGQ8uGPpXNTxba4O3ivKhKRJ67GNJReZyW9VYKrWaVVKA7io8EQ')) {
           googleAppsScriptUrl = storedUrl.trim();
         } else {
           googleAppsScriptUrl = DEFAULT_GAS_URL;
+          localStorage.removeItem(LS_GAS_URL);
         }
         const gasInput = document.getElementById('settingGasUrl');
         if (gasInput) gasInput.value = googleAppsScriptUrl;
@@ -6269,7 +6270,7 @@ function submitCurrentUnit() {
 /**
  * =========================================================================
  * Google Apps Script for Get INVOLVED! M.2 Online Exercise & E-Certificate System
- * ระบบแบบฝึกหัดออนไลน์และออกเกียรติบัตรอิเล็กทรอนิกส์ Get INVOLVED! ม.1 (ทวพ. - TWP)
+ * ระบบแบบฝึกหัดออนไลน์และออกเกียรติบัตรอิเล็กทรอนิกส์ Get INVOLVED! ม.2 (ทวพ. - TWP)
  * เวอร์ชัน 2.0 (Account Authentication & Automated E-Certificate)
  * =========================================================================
  * 
@@ -6296,6 +6297,17 @@ function submitCurrentUnit() {
  */
 
 // ชื่อชีตหลักในระบบ
+
+/**
+ * เพิ่มเมนูพิเศษบน Google Sheets อัตโนมัติเมื่อเปิดชีต
+ */
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('🎓 ระบบ TWP ม.2')
+    .addItem('⚡ ตั้งค่าและสร้างชีตทั้งหมด (Setup Database)', 'setupAllSheets')
+    .addToUi();
+}
+
 const SHEET_STUDENTS = "Students_DB";
 const SHEET_NAME_BASE = "Name_base";
 const SHEET_LOGIN_LOGS = "Login_Logs";
@@ -6309,50 +6321,13 @@ const SHEET_CONFIG = "Teacher_Config";
 function setupAllSheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  // 0. ชีตบัญชีรายชื่อหลัก (Name_base - ตรวจสอบและสร้างหากยังไม่มี)
-  let sheetNameBase = ss.getSheetByName(SHEET_NAME_BASE);
-  if (!sheetNameBase) {
-    sheetNameBase = ss.insertSheet(SHEET_NAME_BASE);
-    const nbHeaders = [
-      "รหัสนักเรียน (StudentID)",
-      "ชื่อ-นามสกุล (FullName)",
-      "โรงเรียน (School)",
-      "ระดับชั้น (GradeClass)",
-      "เลขที่ (No)",
-      "อีเมล (Email)"
-    ];
-    sheetNameBase.appendRow(nbHeaders);
-    formatHeaderRow(sheetNameBase, nbHeaders.length, "#1E40AF");
-    // ใส่ข้อมูลตั้งต้น 53 คน
-    const nbRows = initialStudents.map(s => [s[0], s[1], s[2], s[3], s[4], s[5]]);
-    sheetNameBase.getRange(2, 1, nbRows.length, 6).setValues(nbRows);
-  }
-
-  // 1. ชีตฐานข้อมูลนักเรียน (Students_DB)
-  let sheetStudents = ss.getSheetByName(SHEET_STUDENTS);
-  if (!sheetStudents) {
-    sheetStudents = ss.insertSheet(SHEET_STUDENTS);
-    const headers = [
-      "รหัสนักเรียน (StudentID)",
-      "ชื่อ-นามสกุล (FullName)",
-      "โรงเรียน (School)",
-      "ระดับชั้น/ห้อง (GradeClass)",
-      "เลขที่ (No)",
-      "อีเมลสำหรับเข้าสู่ระบบ (Email)",
-      "รหัสผ่าน (Password)",
-      "สถานะบัญชี (Status)",
-      "วันที่สร้างบัญชี (CreatedAt)"
-    ];
-    sheetStudents.appendRow(headers);
-    formatHeaderRow(sheetStudents, headers.length, "#1E3A8A"); // สีกรมท่า Navy
-
-    // นำเข้ารายชื่อนักเรียนตั้งต้น 53 คนจากเอกสารโครงการ (PDF Roster)
-    const initialStudents = [
+  // นำเข้ารายชื่อนักเรียนตั้งต้น 53 คนจากเอกสารโครงการ (PDF Roster)
+  const initialStudents = [
   [
     "STD-001",
     "พุฒิภัทร สิงห์บุตรดี",
     "รร.เมืองกระบี่ (กระบี่)",
-    "ม.1",
+    "ม.2",
     "1",
     "sawaddeeja020856@gmail.com",
     "",
@@ -6363,7 +6338,7 @@ function setupAllSheets() {
     "STD-002",
     "ด.ช.ปัณณ์ ปณกร",
     "โรงเรียนเมืองกระบี่ (กระบี่)",
-    "ม.1",
+    "ม.2",
     "2",
     "punnawit060257@gmail.com",
     "",
@@ -6374,7 +6349,7 @@ function setupAllSheets() {
     "STD-003",
     "ด.ญ.ณัฐนิชา บุญปลอด",
     "โรงเรียนเมืองกระบี่ (กระบี่)",
-    "ม.1",
+    "ม.2",
     "3",
     "natnichabunplod470@gmail.com",
     "",
@@ -6385,7 +6360,7 @@ function setupAllSheets() {
     "STD-004",
     "ด.ญ นวนิดา เจริญพร",
     "โรงเรียนเมือง (กระบี่)",
-    "ม.1",
+    "ม.2",
     "4",
     "tusdsannee3212@gmail.com",
     "",
@@ -6396,7 +6371,7 @@ function setupAllSheets() {
     "STD-005",
     "ด.ญ.ปัณณภัสร์ เพชรแขก",
     "เมืองกระบี่ (กระบี่)",
-    "ม.1",
+    "ม.2",
     "5",
     "chanyanuch2527@gmail.com",
     "",
@@ -6407,7 +6382,7 @@ function setupAllSheets() {
     "STD-006",
     "จิรัตน์กาล นาควิลัย",
     "โรงเรียนเมืองกระบี่ (กระบี่)",
-    "ม.1",
+    "ม.2",
     "6",
     "ciratntikalnakhwilay@gmail.com",
     "",
@@ -6418,7 +6393,7 @@ function setupAllSheets() {
     "STD-007",
     "ด.ญ.กุลทณพัชร์ ทิพย์มงคล",
     "โรงเรียนเมืองกระบี่ (กระบี่)",
-    "ม.1",
+    "ม.2",
     "7",
     "jaonai1153@hotmail.com",
     "",
@@ -6429,7 +6404,7 @@ function setupAllSheets() {
     "STD-008",
     "Phattarawadee Petchkerd",
     "Muangkrabi School (กระบี่)",
-    "ม.1",
+    "ม.2",
     "8",
     "Phattarawadee@gmail.com",
     "",
@@ -6440,7 +6415,7 @@ function setupAllSheets() {
     "STD-009",
     "ด.ญ.ธนัชชา ถ่ายย้วนกุล",
     "เมืองกระบี่ (กระบี่)",
-    "ม.1",
+    "ม.2",
     "9",
     "thanutcha.tai6486@ndlp.go.th",
     "",
@@ -6451,7 +6426,7 @@ function setupAllSheets() {
     "STD-010",
     "ภูริชชญา เนาวรัตน์",
     "เมืองกระบี่ (กระบี่)",
-    "ม.1",
+    "ม.2",
     "10",
     "Mikixdnoobztv@gmail.com",
     "",
@@ -6462,7 +6437,7 @@ function setupAllSheets() {
     "STD-011",
     "ด.ช ธนภัทร คงสีลัง",
     "โรงเรียนเมืองกระบี่ (กระบี่)",
-    "ม.1",
+    "ม.2",
     "11",
     "tonnum650@gmail.com",
     "",
@@ -6473,7 +6448,7 @@ function setupAllSheets() {
     "STD-012",
     "ด.ญ.ณพัชชนันท์ สิงห์อุไร",
     "โรงเรียนบดินทรเดชา (สิงห์ สิงหเสนี) 2 (กรุงเทพมหานคร)",
-    "ม.1",
+    "ม.2",
     "12",
     "naphatchanansingurai@gmail.com",
     "",
@@ -6484,7 +6459,7 @@ function setupAllSheets() {
     "STD-013",
     "ด.ช.พุฒิพัชร์ เพ็ชรจำรัส",
     "โรงเรียนสาวิทยา (กรุงเทพมหานคร)",
-    "ม.1",
+    "ม.2",
     "13",
     "puttisa22@gmail.com",
     "",
@@ -6495,7 +6470,7 @@ function setupAllSheets() {
     "STD-014",
     "ด.ช.จารุกิตติ์ แสนบุญรัตน์",
     "โรงเรียนปะกงพิทยาคม (พังงา)",
-    "ม.1",
+    "ม.2",
     "14",
     "phupha02022555@gmail.com",
     "",
@@ -6506,7 +6481,7 @@ function setupAllSheets() {
     "STD-015",
     "จารุกิตติ์ แสนบุญรัตน์",
     "โรงเรียนปะกงพิทยาคม (พังงา)",
-    "ม.1",
+    "ม.2",
     "15",
     "phupha02022555",
     "",
@@ -6517,7 +6492,7 @@ function setupAllSheets() {
     "STD-016",
     "ด.ช.พีรศุภ รักมิตร",
     "โรงเรียนเมืองกระบี่ (สระบุรี)",
-    "ม.1",
+    "ม.2",
     "16",
     "rphirsuph@gmail.com",
     "",
@@ -6528,7 +6503,7 @@ function setupAllSheets() {
     "STD-017",
     "ด.ญ.ปุณณดา โกละกะ",
     "สุราษฎร์พิทยา (สุราษฎร์ธานี)",
-    "ม.1",
+    "ม.2",
     "17",
     "punndakolaka351@gmail.com",
     "",
@@ -6539,7 +6514,7 @@ function setupAllSheets() {
     "STD-018",
     "ปุณณพัทธ ชูเพชร์",
     "สุราษฎร์พิทยา (สุราษฎร์ธานี)",
-    "ม.1",
+    "ม.2",
     "18",
     "Punn3101@gmail.com",
     "",
@@ -6933,7 +6908,47 @@ function setupAllSheets() {
   ]
 ];
     if (initialStudents.length > 0) {
-      sheetStudents.getRange(2, 1, initialStudents.length, 9).setValues(initialStudents);
+
+
+  // 0. ชีตบัญชีรายชื่อหลัก (Name_base - ตรวจสอบและสร้างหากยังไม่มี)
+  let sheetNameBase = ss.getSheetByName(SHEET_NAME_BASE);
+  if (!sheetNameBase) {
+    sheetNameBase = ss.insertSheet(SHEET_NAME_BASE);
+    const nbHeaders = [
+      "รหัสนักเรียน (StudentID)",
+      "ชื่อ-นามสกุล (FullName)",
+      "โรงเรียน (School)",
+      "ระดับชั้น (GradeClass)",
+      "เลขที่ (No)",
+      "อีเมล (Email)"
+    ];
+    sheetNameBase.appendRow(nbHeaders);
+    formatHeaderRow(sheetNameBase, nbHeaders.length, "#065F46"); // สีเขียวเข้ม Emerald
+    // ใส่ข้อมูลตั้งต้น 53 คน
+    const nbRows = initialStudents.map(s => [s[0], s[1], s[2], s[3], s[4], s[5]]);
+    sheetNameBase.getRange(2, 1, nbRows.length, 6).setValues(nbRows);
+  }
+
+  // 1. ชีตฐานข้อมูลนักเรียน (Students_DB)
+  let sheetStudents = ss.getSheetByName(SHEET_STUDENTS);
+  if (!sheetStudents) {
+    sheetStudents = ss.insertSheet(SHEET_STUDENTS);
+    const headers = [
+      "รหัสนักเรียน (StudentID)",
+      "ชื่อ-นามสกุล (FullName)",
+      "โรงเรียน (School)",
+      "ระดับชั้น/ห้อง (GradeClass)",
+      "เลขที่ (No)",
+      "อีเมลสำหรับเข้าสู่ระบบ (Email)",
+      "รหัสผ่าน (Password)",
+      "สถานะบัญชี (Status)",
+      "วันที่สร้างบัญชี (CreatedAt)"
+    ];
+    sheetStudents.appendRow(headers);
+    formatHeaderRow(sheetStudents, headers.length, "#065F46"); // สีเขียวเข้ม Emerald
+
+    // นำเข้ารายชื่อนักเรียนตั้งต้น 53 คนจากเอกสารโครงการ (PDF Roster)
+    sheetStudents.getRange(2, 1, initialStudents.length, 9).setValues(initialStudents);
     }
   }
 
@@ -6978,7 +6993,7 @@ function setupAllSheets() {
       "คำตอบนักเรียน (AnswersJSON)"
     ];
     sheetScores.appendRow(headers);
-    formatHeaderRow(sheetScores, headers.length, "#1565C0"); // สีน้ำเงิน Royal Blue
+    formatHeaderRow(sheetScores, headers.length, "#059669"); // สีเขียวมรกต Forest/Emerald
   }
 
   // 3. ชีตประวัติเกียรติบัตร (Certificates)
@@ -7380,7 +7395,7 @@ function doPost(e) {
               เรียน <strong>${studentName}</strong>,
             </p>
             <p style="font-size: 14px; line-height: 1.7; color: #475569;">
-              คุณได้ทำแบบฝึกหัดทบทวนบทเรียนภาษาอังกฤษ ชั้นมัธยมศึกษาปีที่ 2 ครบทุกหน่วยการเรียนรู้ (Unit 5 - 8) สมบูรณ์เรียบร้อยแล้ว ระบบได้ออกเกียรติบัตรอิเล็กทรอนิกส์ (E-Certificate) ประจำตัวคุณเป็นที่เรียบร้อย:
+              คุณได้ทำแบบฝึกหัดทบทวนบทเรียนภาษาอังกฤษ ชั้นมัธยมศึกษาปีที่ 1 ครบทุกหน่วยการเรียนรู้ (Unit 5 - 8) สมบูรณ์เรียบร้อยแล้ว ระบบได้ออกเกียรติบัตรอิเล็กทรอนิกส์ (E-Certificate) ประจำตัวคุณเป็นที่เรียบร้อย:
             </p>
             
             <div style="background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; margin: 24px 0; text-align: center;">

@@ -28,6 +28,17 @@
  */
 
 // ชื่อชีตหลักในระบบ
+
+/**
+ * เพิ่มเมนูพิเศษบน Google Sheets อัตโนมัติเมื่อเปิดชีต
+ */
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('🎓 ระบบ TWP ม.2')
+    .addItem('⚡ ตั้งค่าและสร้างชีตทั้งหมด (Setup Database)', 'setupAllSheets')
+    .addToUi();
+}
+
 const SHEET_STUDENTS = "Students_DB";
 const SHEET_NAME_BASE = "Name_base";
 const SHEET_LOGIN_LOGS = "Login_Logs";
@@ -41,45 +52,8 @@ const SHEET_CONFIG = "Teacher_Config";
 function setupAllSheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  // 0. ชีตบัญชีรายชื่อหลัก (Name_base - ตรวจสอบและสร้างหากยังไม่มี)
-  let sheetNameBase = ss.getSheetByName(SHEET_NAME_BASE);
-  if (!sheetNameBase) {
-    sheetNameBase = ss.insertSheet(SHEET_NAME_BASE);
-    const nbHeaders = [
-      "รหัสนักเรียน (StudentID)",
-      "ชื่อ-นามสกุล (FullName)",
-      "โรงเรียน (School)",
-      "ระดับชั้น (GradeClass)",
-      "เลขที่ (No)",
-      "อีเมล (Email)"
-    ];
-    sheetNameBase.appendRow(nbHeaders);
-    formatHeaderRow(sheetNameBase, nbHeaders.length, "#1E40AF");
-    // ใส่ข้อมูลตั้งต้น 53 คน
-    const nbRows = initialStudents.map(s => [s[0], s[1], s[2], s[3], s[4], s[5]]);
-    sheetNameBase.getRange(2, 1, nbRows.length, 6).setValues(nbRows);
-  }
-
-  // 1. ชีตฐานข้อมูลนักเรียน (Students_DB)
-  let sheetStudents = ss.getSheetByName(SHEET_STUDENTS);
-  if (!sheetStudents) {
-    sheetStudents = ss.insertSheet(SHEET_STUDENTS);
-    const headers = [
-      "รหัสนักเรียน (StudentID)",
-      "ชื่อ-นามสกุล (FullName)",
-      "โรงเรียน (School)",
-      "ระดับชั้น/ห้อง (GradeClass)",
-      "เลขที่ (No)",
-      "อีเมลสำหรับเข้าสู่ระบบ (Email)",
-      "รหัสผ่าน (Password)",
-      "สถานะบัญชี (Status)",
-      "วันที่สร้างบัญชี (CreatedAt)"
-    ];
-    sheetStudents.appendRow(headers);
-    formatHeaderRow(sheetStudents, headers.length, "#065F46"); // สีเขียวเข้ม Emerald
-
-    // นำเข้ารายชื่อนักเรียนตั้งต้น 53 คนจากเอกสารโครงการ (PDF Roster)
-    const initialStudents = [
+  // นำเข้ารายชื่อนักเรียนตั้งต้น 53 คนจากเอกสารโครงการ (PDF Roster)
+  const initialStudents = [
   [
     "STD-001",
     "พุฒิภัทร สิงห์บุตรดี",
@@ -665,7 +639,47 @@ function setupAllSheets() {
   ]
 ];
     if (initialStudents.length > 0) {
-      sheetStudents.getRange(2, 1, initialStudents.length, 9).setValues(initialStudents);
+
+
+  // 0. ชีตบัญชีรายชื่อหลัก (Name_base - ตรวจสอบและสร้างหากยังไม่มี)
+  let sheetNameBase = ss.getSheetByName(SHEET_NAME_BASE);
+  if (!sheetNameBase) {
+    sheetNameBase = ss.insertSheet(SHEET_NAME_BASE);
+    const nbHeaders = [
+      "รหัสนักเรียน (StudentID)",
+      "ชื่อ-นามสกุล (FullName)",
+      "โรงเรียน (School)",
+      "ระดับชั้น (GradeClass)",
+      "เลขที่ (No)",
+      "อีเมล (Email)"
+    ];
+    sheetNameBase.appendRow(nbHeaders);
+    formatHeaderRow(sheetNameBase, nbHeaders.length, "#065F46"); // สีเขียวเข้ม Emerald
+    // ใส่ข้อมูลตั้งต้น 53 คน
+    const nbRows = initialStudents.map(s => [s[0], s[1], s[2], s[3], s[4], s[5]]);
+    sheetNameBase.getRange(2, 1, nbRows.length, 6).setValues(nbRows);
+  }
+
+  // 1. ชีตฐานข้อมูลนักเรียน (Students_DB)
+  let sheetStudents = ss.getSheetByName(SHEET_STUDENTS);
+  if (!sheetStudents) {
+    sheetStudents = ss.insertSheet(SHEET_STUDENTS);
+    const headers = [
+      "รหัสนักเรียน (StudentID)",
+      "ชื่อ-นามสกุล (FullName)",
+      "โรงเรียน (School)",
+      "ระดับชั้น/ห้อง (GradeClass)",
+      "เลขที่ (No)",
+      "อีเมลสำหรับเข้าสู่ระบบ (Email)",
+      "รหัสผ่าน (Password)",
+      "สถานะบัญชี (Status)",
+      "วันที่สร้างบัญชี (CreatedAt)"
+    ];
+    sheetStudents.appendRow(headers);
+    formatHeaderRow(sheetStudents, headers.length, "#065F46"); // สีเขียวเข้ม Emerald
+
+    // นำเข้ารายชื่อนักเรียนตั้งต้น 53 คนจากเอกสารโครงการ (PDF Roster)
+    sheetStudents.getRange(2, 1, initialStudents.length, 9).setValues(initialStudents);
     }
   }
 
